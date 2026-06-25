@@ -120,7 +120,10 @@
     .chat-viewport::before { top: 0; background: linear-gradient(#ECE5DD, rgba(236,229,221,0)); }
     .chat-viewport::after { bottom: 0; background: linear-gradient(rgba(236,229,221,0), #ECE5DD); }
 
-    .chat-feed { position: absolute; left: 0; right: 0; top: 0; padding: 18px 12px; display: flex; flex-direction: column; gap: 8px; will-change: transform; }
+    .chat-feed { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 14px; display: flex; flex-direction: column; will-change: transform; }
+    .chat-feed > * { overflow: hidden; will-change: height, opacity, transform; }
+    .phone-hint { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); z-index: 4; width: 82%; text-align: center; font: 500 0.84rem 'Inter', sans-serif; color: var(--ink-muted); pointer-events: none; }
+    .phone-hint span { display: block; margin-top: 6px; font-size: 1.15rem; animation: hintArrow 2s ease-in-out infinite; }
 
     .bubble { max-width: 84%; padding: 8px 11px 6px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
     .bubble small { display: block; font-size: 0.64rem; color: var(--ink-muted); margin-top: 2px; text-align: right; }
@@ -255,11 +258,12 @@
               <div class="chat-actions" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></div>
             </div>
             <div class="chat-viewport">
+              <div class="phone-hint" id="phoneHint">Haz scroll para ver cómo trabaja Abi <span aria-hidden="true">↓</span></div>
               <div class="chat-feed" id="chatFeed">
                 <div class="bubble incoming">Hola, vi el ático de Sagasta en Idealista. ¿Sigue disponible?<small>dom · 22:14</small></div>
-                <div class="bubble outgoing">¡Buenas! Sí, sigue disponible 🙂 Para enseñarte lo que mejor encaje: ¿zona, presupuesto y para cuándo lo buscas?<small>22:14 ✓✓</small></div>
-                <div class="bubble incoming">Chamberí o Salamanca, hasta 500.000 €, antes del verano.<small>22:15</small></div>
-                <div class="bubble outgoing">Genial. Te paso 3 que encajan con lo tuyo 👇<small>22:15 ✓✓</small></div>
+                <div class="bubble outgoing">¡Buenas! 🙂 Sí, sigue libre. Para enseñarte lo que mejor encaje: ¿en qué zona buscas y con qué presupuesto?<small>22:14 ✓✓</small></div>
+                <div class="bubble incoming">Chamberí o Salamanca, hasta 500.000. Y a poder ser antes del verano.<small>22:15</small></div>
+                <div class="bubble outgoing">Perfecto, me encaja 👌 Te paso 3 que tienen muy buena pinta:<small>22:15 ✓✓</small></div>
                 <div class="bubble outgoing">
                   <div class="prop"><div class="prop-img"></div><div class="prop-title">Ático con terraza · Sagasta</div><div class="prop-price">480.000 €</div><div class="prop-meta">Chamberí · 95 m² · 3 hab</div></div>
                   <small>22:15 ✓✓</small>
@@ -272,7 +276,8 @@
                   <div class="prop"><div class="prop-img" style="background:linear-gradient(135deg,#bbf7d0,#6ee7b7 55%,#5eead4);"></div><div class="prop-title">Exterior luminoso · Lista</div><div class="prop-price">499.000 €</div><div class="prop-meta">Salamanca · 102 m² · 3 hab</div></div>
                   <small>22:16 ✓✓</small>
                 </div>
-                <div class="bubble outgoing">¿Te agendo una visita? Estos son los huecos libres de esta semana:<small>22:16 ✓✓</small></div>
+                <div class="bubble incoming">Uy, el de Sagasta me gusta mucho 👀<small>22:16</small></div>
+                <div class="bubble outgoing">Es de los mejores ahora mismo 🔝 ¿Te lo enseñamos en persona? Tengo estos huecos esta semana:<small>22:16 ✓✓</small></div>
                 <div class="bubble outgoing">
                   <div class="slots">
                     <div class="slot" id="slot0">Miércoles · 18:00 <span class="check"></span></div>
@@ -281,7 +286,9 @@
                   </div>
                   <small>22:16 ✓✓</small>
                 </div>
-                <div class="bubble outgoing">Hecho ✅ He agendado con Irma tu visita al ático de Sagasta el <strong>miércoles a las 18:00</strong>. Te mando recordatorio el día antes 🗓️<small>22:16 ✓✓</small></div>
+                <div class="bubble incoming">El miércoles a las 18:00 me viene genial 🙌<small>22:17</small></div>
+                <div class="bubble outgoing">¡Hecho! ✅ Te agendo con Irma el miércoles a las 18:00. Te mando recordatorio el día antes 🗓️<small>22:17 ✓✓</small></div>
+                <div class="bubble incoming">Genial, muchas gracias 🙏<small>22:17</small></div>
                 <div class="agent-note"><div class="an-icon">🔔</div><div class="an-text"><strong>Aviso para Irma</strong><span>Lead cualificado · hasta 500K · Chamberí/Salamanca · Visita: Mié 18:00</span></div></div>
               </div>
             </div>
@@ -310,7 +317,7 @@
     </div>
   </section>
 
-  <a href="#" class="scroll-hint" id="scrollHint" aria-hidden="true">Haz scroll y descubre cómo trabaja Abi <span class="arrow">↓</span></a>
+  <!-- (el hint de scroll ahora va dentro de la pantalla del móvil) -->
 
   <!-- ============= MODAL ============= -->
   <div class="modal-overlay" id="modalOverlay">
@@ -392,6 +399,8 @@
       var riseEls = Array.prototype.slice.call(closing.querySelectorAll('.closing-rise'));
       var nav = document.querySelector('.nav');
       var stageInner = document.getElementById('stageInner');
+      var phoneHint = document.getElementById('phoneHint');
+      var SLOT_MSG = 10; // índice del mensaje donde el prospect elige el hueco
 
       var items = Array.prototype.slice.call(feed.children);
       var N = items.length;
@@ -417,12 +426,17 @@
       });
 
       var lastStage = -2;
-      var vH = 0, bots = [];
+      var vH = 0, nat = [];
       function measure() {
-        vH = viewport.clientHeight; bots = [];
-        for (var i = 0; i < N; i++) bots[i] = items[i].offsetTop + items[i].offsetHeight;
+        vH = viewport.clientHeight; nat = [];
+        for (var i = 0; i < N; i++) {
+          var it = items[i];
+          var ph = it.style.height, po = it.style.opacity, pm = it.style.marginTop, pt = it.style.transform;
+          it.style.height = 'auto'; it.style.opacity = '1'; it.style.marginTop = '8px'; it.style.transform = 'none';
+          nat[i] = it.offsetHeight; // alto natural del mensaje
+          it.style.height = ph; it.style.opacity = po; it.style.marginTop = pm; it.style.transform = pt;
+        }
       }
-      function tyForBottom(i) { return -(bots[i] - vH) - CONFIG.bottomGap; }
 
       function setStageText(i) { titleEl.innerHTML = stages[i].title; descEl.textContent = stages[i].desc; }
 
@@ -454,30 +468,34 @@
         }
       }
 
+      // Mensajes que LLEGAN al bottom uno a uno (estilo WhatsApp). Móvil vacío al inicio.
       function runChat(cp) {
-        var OPEN = CONFIG.openEnd, ty;
-        if (cp <= OPEN) {
-          ty = tyForBottom(0);
-          for (var a = 0; a < N; a++) items[a].style.opacity = a === 0 ? 1 : 0;
-        } else {
-          var lp = (cp - OPEN) / (1 - OPEN);
-          var scaled = lp * (N - 1);
-          var k = Math.min(Math.floor(scaled) + 1, N - 1);
-          var f = scaled - (k - 1); if (f < 0) f = 0; if (f > 1) f = 1;
-          ty = tyForBottom(k - 1) + (tyForBottom(k) - tyForBottom(k - 1)) * f;
-          for (var b = 0; b < N; b++) items[b].style.opacity = b < k ? 1 : (b === k ? f : 0);
+        var OPEN = CONFIG.openEnd;
+        var span = (1 - OPEN) * 0.9;   // terminan de llegar antes del final, dejando aire
+        var step = span / N;
+        var fSel = 0;
+        for (var i = 0; i < N; i++) {
+          var t = OPEN + i * step;
+          var win = step * 0.8;        // ventana de "llegada" del mensaje
+          var f = (cp - t) / win; if (f < 0) f = 0; if (f > 1) f = 1;
+          if (i === SLOT_MSG) fSel = f;
+          var it = items[i];
+          it.style.height = (f * (nat[i] || 0)) + 'px';   // crece de 0 a su alto -> empuja a los de arriba
+          it.style.opacity = f;
+          it.style.marginTop = (f * 8) + 'px';
+          it.style.transform = 'translateY(' + ((1 - f) * 5) + 'px) scale(' + (0.97 + 0.03 * f) + ')'; // pop al llegar
         }
-        feed.style.transform = 'translateY(' + ty + 'px)';
+        if (slot0) slot0.classList.toggle('selected', fSel > 0.25);
+        if (phoneHint) phoneHint.style.opacity = cp < OPEN ? 1 : Math.max(0, 1 - (cp - OPEN) / 0.04);
 
         var stage = 0;
         for (var s = 0; s < bounds.length; s++) { if (cp < bounds[s][1]) { stage = s; break; } stage = s; }
-        for (var t = 0; t < segEls.length; t++) {
-          segEls[t].classList.remove('active', 'done');
-          if (cp >= bounds[t][1]) segEls[t].classList.add('done');
-          else if (t === stage && cp >= OPEN) segEls[t].classList.add('active');
+        for (var t2 = 0; t2 < segEls.length; t2++) {
+          segEls[t2].classList.remove('active', 'done');
+          if (cp >= bounds[t2][1]) segEls[t2].classList.add('done');
+          else if (t2 === stage && cp >= OPEN) segEls[t2].classList.add('active');
         }
-        showPanel(cp < OPEN ? 0 : stage + 1); // misma transición fade-up para bloque inicial y etapas
-        if (slot0) slot0.classList.toggle('selected', cp >= 0.86);
+        showPanel(cp < OPEN ? 0 : stage + 1);
       }
 
       function render(p) {
@@ -508,6 +526,7 @@
       function applyStatic() {
         experience.style.height = CONFIG.scrollVH + 'vh';
         if (phoneEl) phoneEl.style.height = 'min(740px, ' + CONFIG.phoneVH + 'vh)';
+        if (feed) feed.style.paddingBottom = CONFIG.bottomGap + 'px';
       }
 
       computeBounds();
@@ -518,8 +537,8 @@
         var pin = document.getElementById('expPin'); pin.style.height = 'auto'; pin.style.display = 'block'; pin.style.overflow = 'visible';
         measure();
         opening.style.opacity = 0; stageText.style.opacity = 1; timelineEl.style.opacity = 1;
-        for (var z = 0; z < N; z++) items[z].style.opacity = 1;
-        feed.style.transform = 'translateY(' + tyForBottom(N - 1) + 'px)';
+        for (var z = 0; z < N; z++) { items[z].style.height = 'auto'; items[z].style.opacity = 1; items[z].style.marginTop = '8px'; items[z].style.transform = 'none'; }
+        if (phoneHint) phoneHint.style.opacity = 0;
         if (slot0) slot0.classList.add('selected');
         titleEl.innerHTML = stages[4].title; descEl.textContent = stages[4].desc;
         closing.style.position = 'relative'; closing.style.transform = 'none'; closing.style.minHeight = '100vh';
