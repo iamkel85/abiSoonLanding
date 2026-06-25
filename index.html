@@ -425,13 +425,33 @@
       function tyForBottom(i) { return -(bots[i] - vH) - CONFIG.bottomGap; }
 
       function setStageText(i) { titleEl.innerHTML = stages[i].title; descEl.textContent = stages[i].desc; }
-      function animateStage(i) {
-        if (!window.gsap) { setStageText(i); return; }
-        gsap.killTweensOf(stageInner);
-        gsap.to(stageInner, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in', onComplete: function () {
-          setStageText(i);
-          gsap.fromTo(stageInner, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out' });
-        }});
+
+      // panel 0 = bloque inicial (opening); paneles 1..5 = etapas. MISMA transición fade-up para todos.
+      var activePanel = -1;
+      function showPanel(idx) {
+        if (idx === activePanel) return;
+        var prev = activePanel; activePanel = idx;
+        var inEl = (idx === 0) ? opening : stageText;
+        var outEl = (prev === 0) ? opening : (prev >= 1 ? stageText : null);
+        var sameEl = (outEl === inEl);
+        if (!window.gsap) {
+          if (idx >= 1) setStageText(idx - 1);
+          if (outEl && !sameEl) outEl.style.opacity = 0;
+          inEl.style.opacity = 1; inEl.style.transform = 'none';
+          return;
+        }
+        if (sameEl) { // etapa -> etapa (mismo contenedor): sale, cambia texto, entra
+          gsap.killTweensOf(inEl);
+          gsap.to(inEl, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in', onComplete: function () {
+            setStageText(idx - 1);
+            gsap.fromTo(inEl, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out' });
+          }});
+        } else { // opening <-> etapa: uno sale (fade-up) y el otro entra (fade-up)
+          if (idx >= 1) setStageText(idx - 1);
+          if (outEl) { gsap.killTweensOf(outEl); gsap.to(outEl, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in' }); }
+          gsap.killTweensOf(inEl);
+          gsap.fromTo(inEl, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out', delay: 0.08 });
+        }
       }
 
       function runChat(cp) {
@@ -449,13 +469,6 @@
         }
         feed.style.transform = 'translateY(' + ty + 'px)';
 
-        // opening <-> stage text con fade-up (mismo feeling que el resto de títulos)
-        var ot = cp < OPEN ? cp / OPEN : 1; // 0 al inicio, 1 al pasar la apertura
-        opening.style.opacity = 1 - ot;
-        opening.style.transform = 'translateY(' + (-ot * CONFIG.textShift) + 'px)';
-        stageText.style.opacity = ot;
-        stageText.style.transform = 'translateY(' + ((1 - ot) * CONFIG.textShift) + 'px)';
-
         var stage = 0;
         for (var s = 0; s < bounds.length; s++) { if (cp < bounds[s][1]) { stage = s; break; } stage = s; }
         for (var t = 0; t < segEls.length; t++) {
@@ -463,7 +476,7 @@
           if (cp >= bounds[t][1]) segEls[t].classList.add('done');
           else if (t === stage && cp >= OPEN) segEls[t].classList.add('active');
         }
-        if (stage !== lastStage) { lastStage = stage; animateStage(stage); }
+        showPanel(cp < OPEN ? 0 : stage + 1); // misma transición fade-up para bloque inicial y etapas
         if (slot0) slot0.classList.toggle('selected', cp >= 0.86);
       }
 
@@ -528,9 +541,7 @@
         ScrollTrigger.refresh();
         render(ST ? ST.progress : 0);
       }
-      initScroll();
-      // entrada del bloque inicial al cargar (misma animación que los títulos de etapa)
-      gsap.from(opening, { y: CONFIG.textShift, opacity: 0, duration: CONFIG.textIn, ease: 'power3.out', delay: 0.2 });
+      initScroll(); // showPanel(0) en el primer render hace la entrada del bloque inicial
       window.addEventListener('load', function () { measure(); ScrollTrigger.refresh(); });
 
       // ===== PANEL DE AJUSTE (?tune) =====
