@@ -121,7 +121,7 @@
     .chat-viewport::after { bottom: 0; background: linear-gradient(rgba(236,229,221,0), #ECE5DD); }
 
     .chat-feed { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 14px; display: flex; flex-direction: column; will-change: transform; }
-    .chat-feed > * { overflow: hidden; will-change: height, opacity, transform; }
+    .chat-feed > * { overflow: hidden; min-height: 0; flex: none; will-change: height, opacity, transform; }
     .phone-hint { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); z-index: 4; width: 82%; text-align: center; font: 500 0.84rem 'Inter', sans-serif; color: var(--ink-muted); pointer-events: none; }
     .phone-hint span { display: block; margin-top: 6px; font-size: 1.15rem; animation: hintArrow 2s ease-in-out infinite; }
 
@@ -440,31 +440,22 @@
 
       function setStageText(i) { titleEl.innerHTML = stages[i].title; descEl.textContent = stages[i].desc; }
 
-      // panel 0 = bloque inicial (opening); paneles 1..5 = etapas. MISMA transición fade-up para todos.
-      var activePanel = -1;
-      function showPanel(idx) {
-        if (idx === activePanel) return;
-        var prev = activePanel; activePanel = idx;
-        var inEl = (idx === 0) ? opening : stageText;
-        var outEl = (prev === 0) ? opening : (prev >= 1 ? stageText : null);
-        var sameEl = (outEl === inEl);
-        if (!window.gsap) {
-          if (idx >= 1) setStageText(idx - 1);
-          if (outEl && !sameEl) outEl.style.opacity = 0;
-          inEl.style.opacity = 1; inEl.style.transform = 'none';
-          return;
-        }
-        if (sameEl) { // etapa -> etapa (mismo contenedor): sale, cambia texto, entra
-          gsap.killTweensOf(inEl);
-          gsap.to(inEl, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in', onComplete: function () {
-            setStageText(idx - 1);
-            gsap.fromTo(inEl, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out' });
+      // El bloque inicial (opening) se controla por SCROLL (siempre visible al inicio, robusto).
+      // Las etapas (stageText) hacen one-shot fade-up al cambiar (se disparan scrolleando, en primer plano).
+      var curStage = -1;
+      function ensureStage(i) {
+        if (i === curStage) return;
+        var prev = curStage; curStage = i;
+        if (!window.gsap) { setStageText(i); stageText.style.opacity = 1; stageText.style.transform = 'none'; return; }
+        gsap.killTweensOf(stageText);
+        if (prev < 0) { // primera entrada desde el bloque inicial: fade-up in
+          setStageText(i);
+          gsap.fromTo(stageText, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out' });
+        } else { // cambio de etapa: sale (fade-up), cambia texto, entra (fade-up)
+          gsap.to(stageText, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in', onComplete: function () {
+            setStageText(i);
+            gsap.fromTo(stageText, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out' });
           }});
-        } else { // opening <-> etapa: uno sale (fade-up) y el otro entra (fade-up)
-          if (idx >= 1) setStageText(idx - 1);
-          if (outEl) { gsap.killTweensOf(outEl); gsap.to(outEl, { y: -CONFIG.textShift, opacity: 0, duration: CONFIG.textOut, ease: 'power2.in' }); }
-          gsap.killTweensOf(inEl);
-          gsap.fromTo(inEl, { y: CONFIG.textShift, opacity: 0 }, { y: 0, opacity: 1, duration: CONFIG.textIn, ease: 'power3.out', delay: 0.08 });
         }
       }
 
@@ -495,7 +486,18 @@
           if (cp >= bounds[t2][1]) segEls[t2].classList.add('done');
           else if (t2 === stage && cp >= OPEN) segEls[t2].classList.add('active');
         }
-        showPanel(cp < OPEN ? 0 : stage + 1);
+        // texto izquierdo: opening por scroll (robusto, siempre visible al inicio); stages one-shot
+        var band = 0.025;
+        var opV = Math.min(Math.max((OPEN + band - cp) / (2 * band), 0), 1);
+        opening.style.opacity = opV;
+        opening.style.transform = 'translateY(' + (-(1 - opV) * CONFIG.textShift) + 'px)';
+        if (cp >= OPEN - band) {
+          ensureStage(stage);
+        } else {
+          curStage = -1;
+          if (window.gsap) gsap.killTweensOf(stageText);
+          stageText.style.opacity = 0;
+        }
       }
 
       function render(p) {
