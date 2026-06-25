@@ -449,8 +449,12 @@
         }
         feed.style.transform = 'translateY(' + ty + 'px)';
 
-        opening.style.opacity = cp < OPEN ? 1 - cp / OPEN : 0;
-        stageText.style.opacity = cp < OPEN ? cp / OPEN : 1;
+        // opening <-> stage text con fade-up (mismo feeling que el resto de títulos)
+        var ot = cp < OPEN ? cp / OPEN : 1; // 0 al inicio, 1 al pasar la apertura
+        opening.style.opacity = 1 - ot;
+        opening.style.transform = 'translateY(' + (-ot * CONFIG.textShift) + 'px)';
+        stageText.style.opacity = ot;
+        stageText.style.transform = 'translateY(' + ((1 - ot) * CONFIG.textShift) + 'px)';
 
         var stage = 0;
         for (var s = 0; s < bounds.length; s++) { if (cp < bounds[s][1]) { stage = s; break; } stage = s; }
@@ -525,6 +529,8 @@
         render(ST ? ST.progress : 0);
       }
       initScroll();
+      // entrada del bloque inicial al cargar (misma animación que los títulos de etapa)
+      gsap.from(opening, { y: CONFIG.textShift, opacity: 0, duration: CONFIG.textIn, ease: 'power3.out', delay: 0.2 });
       window.addEventListener('load', function () { measure(); ScrollTrigger.refresh(); });
 
       // ===== PANEL DE AJUSTE (?tune) =====
