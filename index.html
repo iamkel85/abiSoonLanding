@@ -121,7 +121,7 @@
     .chat-viewport::after { bottom: 0; background: linear-gradient(rgba(236,229,221,0), #ECE5DD); }
 
     .chat-feed { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 12px 14px; display: flex; flex-direction: column; will-change: transform; }
-    .chat-feed > * { overflow: hidden; min-height: 0; flex: none; will-change: height, opacity, transform; }
+    .chat-feed > * { overflow: hidden; min-height: 0; flex: none; display: flex; flex-direction: column; will-change: height, opacity, transform; }
     .phone-hint { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); z-index: 4; width: 82%; text-align: center; font: 500 0.84rem 'Inter', sans-serif; color: var(--ink-muted); pointer-events: none; }
     .phone-hint span { display: block; margin-top: 6px; font-size: 1.15rem; animation: hintArrow 2s ease-in-out infinite; }
 
@@ -404,6 +404,11 @@
 
       var items = Array.prototype.slice.call(feed.children);
       var N = items.length;
+      // envuelvo cada mensaje en un contenedor SIN padding para que pueda colapsar a alto 0 real
+      items = items.map(function (el) {
+        var w = document.createElement('div'); w.className = 'msg-wrap';
+        feed.insertBefore(w, el); w.appendChild(el); return w;
+      });
 
       var stages = [
         { title: 'Entra un lead.', desc: 'Un domingo a las 22h, alguien escribe a tu WhatsApp interesado por un piso. Abi ya está ahí.', len: 12 },
