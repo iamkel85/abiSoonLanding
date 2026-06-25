@@ -577,10 +577,13 @@
     })();
   </script>
 
-  <!-- ============= MODO COMENTAR (añade ?comment a la URL) ============= -->
+  <!-- ============= MODO COMENTAR (botón flotante · solo fuera de producción) ============= -->
   <script>
-    if (/[?&]comment\b/.test(location.search)) (function () {
-      var comments = [];
+    (function () {
+      var isProd = /(^|\.)getabi\.pro$/i.test(location.hostname);
+      if (isProd) return; // nunca en getabi.pro (que no lo vean los prospects)
+
+      var on = false, comments = [];
 
       function cssPath(el) {
         if (!el || el === document.body || el.nodeType !== 1) return 'body';
@@ -594,8 +597,7 @@
           }
           var parent = el.parentNode;
           if (parent && parent.children) sel += ':nth-child(' + (Array.prototype.indexOf.call(parent.children, el) + 1) + ')';
-          path.unshift(sel);
-          el = el.parentNode;
+          path.unshift(sel); el = el.parentNode;
         }
         return path.join(' > ');
       }
@@ -603,23 +605,41 @@
         var t = (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 46);
         return el.tagName.toLowerCase() + (t ? ' “' + t + '”' : '');
       }
-      function flash(el) {
-        var prev = el.style.outline, prevO = el.style.outlineOffset;
-        el.style.outline = '2px solid #25D366'; el.style.outlineOffset = '2px';
-        setTimeout(function () { el.style.outline = prev; el.style.outlineOffset = prevO; }, 900);
-      }
 
-      var box = document.createElement('div');
-      box.id = 'commentPanel';
-      box.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:99999;width:280px;max-height:60vh;overflow:auto;background:rgba(20,20,20,0.94);color:#fff;font:12px/1.45 Inter,sans-serif;padding:14px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.45);backdrop-filter:blur(8px);';
-      box.innerHTML = '<div style="font-weight:700;margin-bottom:4px">Modo comentar <span id="cCount" style="opacity:.6">(0)</span></div>'
-        + '<div style="opacity:.6;margin-bottom:10px">Clica cualquier elemento y escribe tu nota.</div>'
+      var ui = document.createElement('div'); ui.id = 'commentUI'; document.body.appendChild(ui);
+      function inUI(el) { return el && el.closest && el.closest('#commentUI'); }
+
+      var toggle = document.createElement('button');
+      toggle.textContent = '💬 Comentar';
+      toggle.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:100001;padding:11px 16px;border:none;border-radius:100px;background:#1A1A1A;color:#fff;font:600 13px Inter,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)';
+      ui.appendChild(toggle);
+
+      var hl = document.createElement('div');
+      hl.style.cssText = 'position:fixed;pointer-events:none;z-index:99998;border:2px solid #25D366;border-radius:6px;background:rgba(37,211,102,0.10);display:none;';
+      ui.appendChild(hl);
+      var hlLabel = document.createElement('div');
+      hlLabel.style.cssText = 'position:fixed;pointer-events:none;z-index:99999;background:#25D366;color:#fff;font:600 11px Inter,sans-serif;padding:3px 7px;border-radius:5px;display:none;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis';
+      ui.appendChild(hlLabel);
+
+      var panel = document.createElement('div'); panel.id = 'commentPanel';
+      panel.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:100000;width:280px;max-height:62vh;overflow:auto;background:rgba(20,20,20,0.94);color:#fff;font:12px/1.45 Inter,sans-serif;padding:14px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.45);backdrop-filter:blur(8px);display:none';
+      panel.innerHTML = '<div style="font-weight:700;margin-bottom:4px">Comentarios <span id="cCount" style="opacity:.6">(0)</span></div>'
+        + '<div style="opacity:.6;margin-bottom:10px">Pasa el cursor (se resalta el elemento) y clica para comentar.</div>'
         + '<div id="cList"></div>'
         + '<button id="cExport" style="width:100%;margin-top:8px;padding:9px;border:none;border-radius:8px;background:#25D366;color:#fff;font-weight:700;cursor:pointer">Exportar feedback</button>'
         + '<button id="cClear" style="width:100%;margin-top:6px;padding:7px;border:1px solid rgba(255,255,255,.25);border-radius:8px;background:transparent;color:#fff;cursor:pointer">Vaciar</button>';
-      document.body.appendChild(box);
-      var listEl = box.querySelector('#cList');
-      var countEl = box.querySelector('#cCount');
+      ui.appendChild(panel);
+      var listEl = panel.querySelector('#cList');
+      var countEl = panel.querySelector('#cCount');
+
+      function moveHL(el) {
+        var r = el.getBoundingClientRect();
+        hl.style.display = 'block'; hl.style.left = r.left + 'px'; hl.style.top = r.top + 'px'; hl.style.width = r.width + 'px'; hl.style.height = r.height + 'px';
+        hlLabel.style.display = 'block'; hlLabel.textContent = label(el);
+        var ly = r.top - 22; if (ly < 2) ly = r.top + 4;
+        hlLabel.style.left = r.left + 'px'; hlLabel.style.top = ly + 'px';
+      }
+      function hideHL() { hl.style.display = 'none'; hlLabel.style.display = 'none'; }
 
       function render() {
         countEl.textContent = '(' + comments.length + ')';
@@ -630,18 +650,33 @@
         }).join('');
       }
 
+      document.addEventListener('mousemove', function (e) {
+        if (!on) return;
+        if (inUI(e.target)) { hideHL(); return; }
+        moveHL(e.target);
+      }, true);
+      window.addEventListener('scroll', function () { if (on) hideHL(); }, true);
+
       document.addEventListener('click', function (e) {
-        if (e.target.closest && e.target.closest('#commentPanel')) return;
+        if (!on || inUI(e.target)) return;
         e.preventDefault(); e.stopPropagation();
         var el = e.target;
         var note = window.prompt('Comentario para ' + label(el) + ':');
         if (note == null || note.trim() === '') return;
         comments.push({ label: label(el), sel: cssPath(el), note: note.trim() });
-        flash(el); render();
+        render();
       }, true);
 
-      box.querySelector('#cExport').addEventListener('click', function () {
-        if (!comments.length) { this.textContent = 'Nada que exportar'; var b = this; setTimeout(function () { b.textContent = 'Exportar feedback'; }, 1400); return; }
+      toggle.addEventListener('click', function () {
+        on = !on;
+        toggle.textContent = on ? '✕ Salir' : '💬 Comentar';
+        toggle.style.background = on ? '#25D366' : '#1A1A1A';
+        panel.style.display = on ? 'block' : 'none';
+        document.documentElement.style.cursor = on ? 'crosshair' : '';
+        if (!on) hideHL();
+      });
+      panel.querySelector('#cExport').addEventListener('click', function () {
+        if (!comments.length) { var b0 = this; this.textContent = 'Nada que exportar'; setTimeout(function () { b0.textContent = 'Exportar feedback'; }, 1400); return; }
         var txt = 'FEEDBACK LANDING ABI\n\n' + comments.map(function (c, i) {
           return (i + 1) + '. ' + c.label + '\n   selector: ' + c.sel + '\n   nota: ' + c.note;
         }).join('\n\n');
@@ -649,7 +684,7 @@
         console.log(txt);
         var btn = this; btn.textContent = '¡Copiado! ✓'; setTimeout(function () { btn.textContent = 'Exportar feedback'; }, 1500);
       });
-      box.querySelector('#cClear').addEventListener('click', function () { comments = []; render(); });
+      panel.querySelector('#cClear').addEventListener('click', function () { comments = []; render(); });
       render();
     })();
   </script>
